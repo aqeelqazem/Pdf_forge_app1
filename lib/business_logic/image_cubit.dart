@@ -51,6 +51,12 @@ class ImageCubit extends Cubit<ImageState> {
     _sessionService.clearSession();
   }
 
+  void updateImage(String path, Uint8List newBytes) {
+    final newBytesMap = Map<String, Uint8List>.from(state.imageBytes);
+    newBytesMap[path] = newBytes;
+    emit(state.copyWith(imageBytes: newBytesMap));
+  }
+
   Future<Map<String, Uint8List>> _getBytesForImages(List<XFile> images) async {
     final map = <String, Uint8List>{};
     for (final image in images) {

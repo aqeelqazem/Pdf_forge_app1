@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_cropper/image_cropper.dart';
 import 'package:myapp/business_logic/image_cubit.dart';
 
 class ImageEditScreen extends StatefulWidget {
@@ -13,6 +14,31 @@ class ImageEditScreen extends StatefulWidget {
 
 class _ImageEditScreenState extends State<ImageEditScreen> {
   int _currentIndex = 0;
+
+  Future<void> _cropImage(BuildContext context, String imagePath) async {
+    final imageCubit = context.read<ImageCubit>();
+    final croppedFile = await ImageCropper().cropImage(
+      sourcePath: imagePath,
+      compressFormat: ImageCompressFormat.jpg,
+      compressQuality: 80,
+      uiSettings: [
+        AndroidUiSettings(
+            toolbarTitle: 'Crop & Rotate',
+            toolbarColor: Theme.of(context).colorScheme.primary,
+            toolbarWidgetColor: Colors.white,
+            initAspectRatio: CropAspectRatioPreset.original,
+            lockAspectRatio: false),
+        IOSUiSettings(
+          title: 'Crop & Rotate',
+        ),
+      ],
+    );
+
+    if (croppedFile != null) {
+      final newBytes = await croppedFile.readAsBytes();
+      imageCubit.updateImage(imagePath, newBytes);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +70,7 @@ class _ImageEditScreenState extends State<ImageEditScreen> {
               IconButton(
                 icon: const Icon(Icons.check_circle_outline),
                 tooltip: 'Done',
-                onPressed: null, // Disabled as requested
+                onPressed: () => context.go('/display'),
               ),
             ],
           ),
@@ -61,15 +87,9 @@ class _ImageEditScreenState extends State<ImageEditScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   ElevatedButton.icon(
-                    icon: const Icon(Icons.crop),
-                    label: const Text('Apply Crop'),
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('غير مفعلة حاليا'),
-                        ),
-                      );
-                    },
+                    icon: const Icon(Icons.crop_rotate),
+                    label: const Text('Crop & Rotate'),
+                    onPressed: () => _cropImage(context, imagePath),
                   ),
                 ],
               ),
