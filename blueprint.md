@@ -1,73 +1,47 @@
-# Blueprint: PDF Genius App
 
-## 1. Overview
+# Blueprint: PDF Genius
 
-This document provides a detailed blueprint of the **PDF Genius** application. It outlines the project's purpose, features, design principles, and technical architecture. This file serves as a single source of truth for the application's current state and future development plans.
+## Visión General
 
----
+PDF Genius es una aplicación móvil diseñada para permitir a los usuarios crear documentos PDF de alta calidad a partir de sus imágenes de forma rápida y sencilla. La aplicación se centra en un flujo de trabajo intuitivo, desde la selección de imágenes y la edición hasta la generación del PDF final.
 
-## 2. Style, Design, and Features (Version 2.1.0)
+## Características Implementadas
 
-This section documents all features and design choices implemented in the application.
+### Funcionalidad Principal
 
-### 2.1. Core Purpose
+*   **Selección de Imágenes**: Los usuarios pueden seleccionar múltiples imágenes de la galería de su dispositivo.
+*   **Gestión de Estado Centralizada**: Se utiliza `ImageCubit` (basado en `flutter_bloc`) para gestionar el estado de las imágenes seleccionadas.
+*   **Previsualización y Reordenación**: Una pantalla (`ImageDisplayScreen`) muestra las imágenes seleccionadas en una cuadrícula donde los usuarios pueden:
+    *   Reordenar las imágenes arrastrándolas.
+    *   Eliminar imágenes individualmente.
+    *   Añadir más imágenes a la sesión actual.
+    *   Limpiar todas las imágenes para iniciar una nueva sesión.
+*   **Generación de PDF**: Los usuarios pueden crear y compartir un documento PDF a partir de las imágenes seleccionadas.
+*   **Navegación Robusta**: Se utiliza `go_router` para la navegación, con redirecciones automáticas para garantizar una experiencia de usuario fluida.
+*   **Persistencia de Sesión**: La aplicación guarda automáticamente el estado de la sesión (imágenes seleccionadas y su orden), permitiendo a los usuarios continuar donde lo dejaron.
 
-The application is a utility tool designed to convert multiple images into a single, shareable PDF document. It prioritizes a simple, intuitive workflow and cross-platform compatibility.
+### Editor de Imágenes (Interfaz Integrada Avanzada)
 
-### 2.2. Visual Design & Theming
+*   **Edición Integrada**: La funcionalidad de edición ha sido completamente rediseñada para una experiencia de usuario superior. En lugar de una herramienta externa, el editor de imágenes ahora es una parte integral de la pantalla de edición.
+*   **Paquete Utilizado**: Se reemplazó `image_cropper` por `crop_your_image`, que permite incrustar el editor directamente en la interfaz de usuario.
+*   **Interfaz de Edición**:
+    *   **Visor de Recorte Activo**: La imagen principal se muestra con un cuadro de recorte activo superpuesto, permitiendo al usuario ver y ajustar el área de recorte en tiempo real.
+    *   **Barra de Miniaturas**: Se mantiene la barra de miniaturas en la parte inferior para una navegación rápida entre las imágenes de la sesión.
+*   **Herramientas de Edición**:
+    *   **Recortar (Crop)**: El usuario puede aplicar el recorte directamente presionando un botón ("Apply Crop"), y la imagen se actualiza en el mismo lugar.
+    *   **Girar (Rotate)**: Se proporcionan botones para girar la imagen a la izquierda y a la derecha de forma instantánea.
+*   **Flujo de Trabajo No Destructivo**: Al igual que antes, las modificaciones no alteran los archivos originales. Los cambios se guardan como nuevos datos de imagen (`Uint8List`) dentro del estado de la aplicación.
 
-*   **App Name**: The application is branded as **PDF Genius**.
-*   **Aesthetic**: Modern, clean, and professional.
-*   **Layout**: A multi-screen structure with declarative routing.
-*   **Color Scheme**: Implements Material 3 with `ColorScheme.fromSeed` and supports both Light and Dark modes.
-*   **Typography**: Uses `google_fonts` for a clear visual hierarchy.
-*   **Iconography**: Uses modern, consistent `outlined` Material Design icons.
-*   **Debug Banner**: The "Debug" mode banner has been removed.
+### Tema y Estilo
 
-### 2.3. Core Features
+*   **Tema General**: La aplicación utiliza `ThemeData` con `ColorScheme.fromSeed` para un esquema de color moderno y consistente. El color principal es `Colors.blueGrey`.
+*   **Modo Oscuro/Claro**: Soporte completo para ambos modos, con un botón en la pantalla de "Acerca de" para alternar.
+*   **Tipografía**: Se utiliza el paquete `google_fonts` con la fuente "Roboto" para una tipografía limpia y legible.
 
-1.  **Stateful Navigation & Session Awareness**:
-    *   Users can freely navigate between the home and editor screens while preserving the current image selection.
-    *   The Home Screen now features a **conditional "Continue Editing" button** in the `AppBar` that only appears if there is an active session, providing an intuitive way to return to the editor.
+## Próximos Pasos
 
-2.  **Session Persistence**: Automatically saves and reloads the user's session across app restarts.
+Aunque la funcionalidad principal está completa, se podrían considerar las siguientes mejoras en el futuro:
 
-3.  **Image Management**: 
-    *   Users can select, reorder (drag-and-drop), and delete images.
-    *   An "Add More Images" button is available on the editor screen.
-
-4.  **PDF Generation**: Compiles images into a PDF with a custom filename and opens a native share sheet.
-
-5.  **About Screen**: Displays app information, version, and copyright details.
-
-6.  **Robust Error Handling**: Gracefully handles errors during PDF creation without crashing the app.
-
-### 2.4. Platform-Specific Configuration
-
-*   **Android**: Includes the `INTERNET` permission in `AndroidManifest.xml`.
-
-### 2.5. Architecture
-
-*   **Navigation**: **`go_router`** is used for declarative, URL-based routing (`/`, `/editor`, `/about`). This provides a robust and predictable navigation structure.
-*   **State Management**: `flutter_bloc` (`ImageCubit`) manages the application state for image data.
-*   **UI Reactivity**: The UI, particularly the `AppBar` on the home screen, reacts to the state of the `ImageCubit` to conditionally display relevant controls.
-*   **Route Protection**: A `redirect` is implemented in the router to automatically send users to the home screen if they attempt to access the editor without any selected images.
-*   **Service Layer**: Logic is separated into services (`PdfService`, `SessionService`).
-
----
-
-## 3. Current Plan & Action Steps
-
-**Status:** Completed
-
-### Plan: Implement Smart Session Navigation
-
-1.  **[Done] Add Conditional "Continue Editing" Button**:
-    *   **Problem**: After navigating back to the home screen, there was no way to return to the active editing session, causing user confusion.
-    *   **Action**: Added a `BlocBuilder` to the `AppBar` of the `HomeScreen`.
-    *   **Action**: This builder conditionally adds an `IconButton` (`Icons.edit_document`) that, when pressed, navigates the user back to the editor screen using `context.go('/editor')`.
-    *   **Result**: The application now provides a clear and intuitive way for users to resume their work, significantly improving the user experience.
-
-2.  **[Done] Refine New Session Logic**:
-    *   **Action**: Updated the "Start New Session" button on the home screen to explicitly clear any pre-existing images before picking new ones.
-    *   **Result**: This ensures that starting a new session is a clean and predictable action.
+*   **Filtros de Imagen**: Añadir filtros básicos (blanco y negro, sepia, etc.).
+*   **Ajustes de Calidad de PDF**: Permitir al usuario elegir la calidad y compresión del PDF.
+*   **Mejoras en la Interfaz de Usuario**: Añadir animaciones y transiciones para una experiencia más pulida.

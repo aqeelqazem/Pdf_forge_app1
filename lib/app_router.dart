@@ -5,8 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:myapp/business_logic/image_cubit.dart';
 import 'package:myapp/ui/screens/about_screen.dart';
-import 'package:myapp/ui/screens/editor_screen.dart';
+import 'package:myapp/ui/screens/image_display_screen.dart';
 import 'package:myapp/ui/screens/home_screen.dart';
+import 'package:myapp/ui/screens/image_edit_screen.dart';
 
 // Helper class to make GoRouter listen to Bloc stream changes
 class GoRouterRefreshStream extends ChangeNotifier {
@@ -50,19 +51,26 @@ class AppRouter {
         ],
       ),
       GoRoute(
-        path: '/editor',
+        path: '/display',
         builder: (BuildContext context, GoRouterState state) {
-          return const EditorScreen();
+          return const ImageDisplayScreen();
+        },
+      ),
+      GoRoute(
+        path: '/edit',
+        builder: (BuildContext context, GoRouterState state) {
+          return const ImageEditScreen();
         },
       ),
     ],
     redirect: (BuildContext context, GoRouterState state) {
       final bool hasImages = imageCubit.state.pickedImages.isNotEmpty;
-      final String editorLocation = '/editor';
+      final String displayLocation = '/display';
+      final String editLocation = '/edit';
 
       // If the user is trying to go to the editor but has no images,
       // redirect them to the home page.
-      if (!hasImages && state.matchedLocation == editorLocation) {
+      if (!hasImages && (state.matchedLocation == displayLocation || state.matchedLocation == editLocation)) {
         return '/';
       }
 

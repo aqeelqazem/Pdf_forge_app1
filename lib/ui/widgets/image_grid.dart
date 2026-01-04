@@ -1,58 +1,69 @@
 
-import 'dart:io';
-
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:myapp/business_logic/image_cubit.dart';
 import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 
 class ImageGrid extends StatelessWidget {
-  final List<XFile> images;
-
-  const ImageGrid({super.key, required this.images});
+  const ImageGrid({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final imageCubit = context.read<ImageCubit>();
+    // Wrap the grid with a BlocBuilder to ensure it rebuilds on any state change.
+    return BlocBuilder<ImageCubit, ImageState>(
+      builder: (context, state) {
+        final images = state.pickedImages;
 
-    return ReorderableGridView.builder(
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        crossAxisSpacing: 8,
-        mainAxisSpacing: 8,
-      ),
-      itemCount: images.length,
-      itemBuilder: (context, index) {
-        final image = images[index];
-        return ReorderableDragStartListener(
-          index: index,
-          key: ValueKey(image.path),
-          child: Stack(
-            alignment: Alignment.topRight,
-            children: [
-              Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  image: DecorationImage(
-                    image: kIsWeb
-                        ? NetworkImage(image.path)
-                        : FileImage(File(image.path)) as ImageProvider,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.remove_circle, color: Colors.red),
-                onPressed: () => imageCubit.removeImage(index),
-              ),
-            ],
+        return ReorderableGridView.builder(
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            crossAxisSpacing: 4.0,
+            mainAxisSpacing: 4.0,
           ),
+          itemCount: images.length,
+          onReorder: (oldIndex, newIndex) {
+            context.read<ImageCubit>().reorderImages(oldIndex, newIndex);
+          },
+          itemBuilder: (context, index) {
+            final image = images[index];
+            final bytes = state.imageBytes[image.path];
+
+            // Using a more robust key. The image path is unique and stable.
+            return ReorderableDragStartListener(
+              key: ValueKey(image.path), 
+              index: index,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  if (bytes != null)
+                    // Add another ValueKey here based on the bytes to force image refresh
+                    Image.memory(
+                      bytes,
+                      key: ValueKey(bytes.hashCode),
+                      fit: BoxFit.cover,
+                    )
+                  else
+                    const Center(child: CircularProgressIndicator()),
+                  Positioned(
+                    top: 4,
+                    right: 4,
+                    child: GestureDetector(
+                      onTap: () => context.read<ImageCubit>().removeImage(index),
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.black54,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.close, color: Colors.white, size: 16),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
         );
-      },
-      onReorder: (oldIndex, newIndex) {
-        imageCubit.reorderImages(oldIndex, newIndex);
       },
     );
   }

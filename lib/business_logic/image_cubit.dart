@@ -1,4 +1,7 @@
 
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:myapp/services/session_service.dart';
@@ -13,19 +16,25 @@ class ImageCubit extends Cubit<ImageState> {
   Future<void> loadInitialSession() async {
     final images = await _sessionService.loadSession();
     if (images.isNotEmpty) {
-      emit(state.copyWith(pickedImages: images));
+      final imageBytes = await _getBytesForImages(images);
+      emit(state.copyWith(pickedImages: images, imageBytes: imageBytes));
     }
   }
 
-  void addImages(List<XFile> images) {
+  Future<void> addImages(List<XFile> images) async {
     final updatedImages = [...state.pickedImages, ...images];
-    emit(state.copyWith(pickedImages: updatedImages));
+    final newBytes = await _getBytesForImages(images);
+    final updatedBytes = {...state.imageBytes, ...newBytes};
+    emit(state.copyWith(pickedImages: updatedImages, imageBytes: updatedBytes));
     _sessionService.saveSession(updatedImages);
   }
 
   void removeImage(int index) {
+    final imageToRemove = state.pickedImages[index];
     final newImages = List<XFile>.from(state.pickedImages)..removeAt(index);
-    emit(state.copyWith(pickedImages: newImages));
+    final newBytes = Map<String, Uint8List>.from(state.imageBytes)
+      ..remove(imageToRemove.path);
+    emit(state.copyWith(pickedImages: newImages, imageBytes: newBytes));
     _sessionService.saveSession(newImages);
   }
 
@@ -38,7 +47,15 @@ class ImageCubit extends Cubit<ImageState> {
   }
 
   void clearImages() {
-    emit(state.copyWith(pickedImages: []));
+    emit(state.copyWith(pickedImages: [], imageBytes: {}));
     _sessionService.clearSession();
+  }
+
+  Future<Map<String, Uint8List>> _getBytesForImages(List<XFile> images) async {
+    final map = <String, Uint8List>{};
+    for (final image in images) {
+      map[image.path] = await image.readAsBytes();
+    }
+    return map;
   }
 }

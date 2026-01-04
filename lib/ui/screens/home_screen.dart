@@ -9,17 +9,18 @@ class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   Future<void> _pickImages(BuildContext context) async {
-    // When picking images from the home screen, we always start a new session.
     final imageCubit = context.read<ImageCubit>();
     if (imageCubit.state.pickedImages.isNotEmpty) {
       imageCubit.clearImages();
     }
 
     final List<XFile> images = await ImagePicker().pickMultiImage();
-    if (images.isNotEmpty && context.mounted) {
-      imageCubit.addImages(images);
-      context.go('/editor');
-    }
+    if (!context.mounted || images.isEmpty) return;
+
+    await imageCubit.addImages(images);
+    if (!context.mounted) return;
+
+    context.go('/display');
   }
 
   @override
@@ -30,18 +31,15 @@ class HomeScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('PDF Genius'),
         actions: [
-          // This builder will conditionally show the 'Edit' button
           BlocBuilder<ImageCubit, ImageState>(
             builder: (context, state) {
               if (state.pickedImages.isEmpty) {
-                // If there are no images, show nothing.
                 return const SizedBox.shrink();
               } else {
-                // If there are images, show a button to go back to the editor.
                 return IconButton(
                   icon: const Icon(Icons.edit_document),
                   tooltip: 'Continue Editing',
-                  onPressed: () => context.go('/editor'),
+                  onPressed: () => context.go('/display'),
                 );
               }
             },
