@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:myapp/business_logic/image_cubit.dart';
 
 class ImageEditScreen extends StatefulWidget {
@@ -33,6 +34,11 @@ class _ImageEditScreenState extends State<ImageEditScreen> {
 
         return Scaffold(
           appBar: AppBar(
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              tooltip: 'Back to Display',
+              onPressed: () => context.go('/display'),
+            ),
             title: const Text('Edit Image', style: TextStyle(fontSize: 20)),
             actions: [
               IconButton(

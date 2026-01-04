@@ -48,6 +48,11 @@ class ImageDisplayScreen extends StatelessWidget {
 
         return Scaffold(
           appBar: AppBar(
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              tooltip: 'Back to Home',
+              onPressed: () => context.go('/'),
+            ),
             title: Text('Selected Images (${images.length})'),
             actions: [
               if (images.isNotEmpty)
@@ -93,11 +98,6 @@ class ImageDisplayScreen extends StatelessWidget {
                   tooltip: 'Delete All',
                   onPressed: () => _showDeleteConfirmation(context),
                 ),
-              IconButton(
-                icon: const Icon(Icons.info_outline),
-                tooltip: 'About',
-                onPressed: () => context.go('/about'),
-              )
             ],
           ),
           body: images.isEmpty

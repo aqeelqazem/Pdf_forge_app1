@@ -11,6 +11,29 @@ class HomeScreen extends StatelessWidget {
   Future<void> _pickImages(BuildContext context) async {
     final imageCubit = context.read<ImageCubit>();
     if (imageCubit.state.pickedImages.isNotEmpty) {
+      final bool? shouldClear = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Start New Session?'),
+          content: const Text(
+              'Starting a new session will clear your current images. Do you want to continue?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: const Text('Continue'),
+            ),
+          ],
+        ),
+      );
+
+      if (shouldClear != true) {
+        return;
+      }
+
       imageCubit.clearImages();
     }
 
