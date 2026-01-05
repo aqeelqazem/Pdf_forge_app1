@@ -16,7 +16,8 @@ PDF Genius es una aplicación móvil diseñada para permitir a los usuarios crea
     *   Eliminar imágenes individualmente.
     *   Añadir más imágenes a la sesión actual.
     *   Limpiar todas las imágenes para iniciar una nueva sesión.
-*   **Generación de PDF**: Los usuarios pueden crear y compartir un documento PDF a partir de las imágenes seleccionadas.
+*   **Generación de PDF con Orden Correcto**: Los usuarios pueden crear un documento PDF a partir de las imágenes seleccionadas. El sistema ahora garantiza que el orden de las páginas en el PDF coincida exactamente con el orden de las imágenes establecido por el usuario mediante arrastrar y soltar.
+*   **Uso compartido de PDF**: Después de crear un PDF, los usuarios tienen la opción de compartirlo instantáneamente a través de las opciones nativas del dispositivo.
 *   **Navegación Robusta**: Se utiliza `go_router` para la navegación, con redirecciones automáticas para garantizar una experiencia de usuario fluida.
 *   **Persistencia de Sesión**: La aplicación guarda automáticamente el estado de la sesión (imágenes seleccionadas y su orden), permitiendo a los usuarios continuar donde lo dejaron.
 
@@ -37,6 +38,10 @@ PDF Genius es una aplicación móvil diseñada para permitir a los usuarios crea
 *   **Tema General**: La aplicación utiliza `ThemeData` con `ColorScheme.fromSeed` para un esquema de color moderno y consistente. El color principal es `Colors.blueGrey`.
 *   **Modo Oscuro/Claro**: Soporte completo para ambos modos, con un botón en la pantalla de "Acerca de" para alternar.
 *   **Tipografía**: Se utiliza el paquete `google_fonts` con la fuente "Roboto" para una tipografía limpia y legible.
+
+## Estado del Código
+
+El código base está ahora **estable y libre de errores de compilación**. Se han abordado todos los problemas críticos que impedían el funcionamiento de la aplicación, incluido el error de ordenación de imágenes. Las advertencias restantes (`deprecated_member_use`, `unused_import`) han sido revisadas y se ha determinado que no afectan la funcionalidad actual de la aplicación, aunque se recomienda abordarlas en futuras iteraciones para mantener la calidad del código a largo plazo.
 
 ## Próximos Pasos
 

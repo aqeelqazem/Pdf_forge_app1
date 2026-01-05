@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -40,16 +39,17 @@ class HomeScreen extends StatelessWidget {
     final List<XFile> images = await ImagePicker().pickMultiImage();
     if (!context.mounted || images.isEmpty) return;
 
+    // Navigation logic is now fully handled by GoRouter's redirect function.
+    // This cubit change will trigger the router's listener.
     await imageCubit.addImages(images);
-    if (!context.mounted) return;
-
-    context.go('/display');
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
+    // The BlocListener has been removed as per the approved architecture.
+    // The Scaffold is now the top-level widget.
     return Scaffold(
       appBar: AppBar(
         title: const Text('PDF Genius'),
@@ -100,14 +100,31 @@ class HomeScreen extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 40),
-              ElevatedButton.icon(
-                icon: const Icon(Icons.image_outlined),
-                label: const Text('Start New Session'),
-                onPressed: () => _pickImages(context),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                  textStyle: theme.textTheme.titleMedium,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.image_outlined),
+                    label: const Text('Start New Session'),
+                    onPressed: () => _pickImages(context),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 16),
+                      textStyle: theme.textTheme.titleMedium,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  OutlinedButton.icon(
+                    icon: const Icon(Icons.folder_open_outlined),
+                    label: const Text('Library'),
+                    onPressed: () => context.go('/library'),
+                    style: OutlinedButton.styleFrom(
+                       padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 16),
+                      textStyle: theme.textTheme.titleMedium,
+                    ),
+                  )
+                ],
               ),
             ],
           ),

@@ -8,9 +8,9 @@ class AboutScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     const String appName = 'PDF Genius';
-    const String appVersion = '2.1.0'; // Updated Version
+    const String appVersion = '1.0.0'; // Updated Version
     const String developerName = 'Aqeel Al-Ulyawi';
-    const String copyrightYear = '2026'; // Updated Year
+    const String copyrightYear = '2026'; // Corrected Year
 
     return Scaffold(
       appBar: AppBar(

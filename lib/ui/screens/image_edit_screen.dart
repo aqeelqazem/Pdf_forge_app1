@@ -69,8 +69,29 @@ class _ImageEditScreenState extends State<ImageEditScreen> {
             actions: [
               IconButton(
                 icon: const Icon(Icons.check_circle_outline),
-                tooltip: 'Done',
-                onPressed: () => context.go('/display'),
+                tooltip: 'Save and Continue',
+                onPressed: () {
+                  if (_currentIndex < state.pickedImages.length - 1) {
+                    setState(() {
+                      _currentIndex++;
+                    });
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Changes saved. Next image.'),
+                        duration: Duration(seconds: 1),
+                      ),
+                    );
+                  } else {
+                    // This was the last image, go back.
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('All images processed.'),
+                        duration: Duration(seconds: 1),
+                      ),
+                    );
+                    context.go('/display');
+                  }
+                },
               ),
             ],
           ),

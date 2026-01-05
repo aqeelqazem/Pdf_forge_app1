@@ -8,6 +8,7 @@ import 'package:myapp/ui/screens/about_screen.dart';
 import 'package:myapp/ui/screens/image_display_screen.dart';
 import 'package:myapp/ui/screens/home_screen.dart';
 import 'package:myapp/ui/screens/image_edit_screen.dart';
+import 'package:myapp/ui/screens/pdf_library_screen.dart';
 
 // Helper class to make GoRouter listen to Bloc stream changes
 class GoRouterRefreshStream extends ChangeNotifier {
@@ -60,6 +61,12 @@ class AppRouter {
         path: '/edit',
         builder: (BuildContext context, GoRouterState state) {
           return const ImageEditScreen();
+        },
+      ),
+      GoRoute(
+        path: '/library',
+        builder: (BuildContext context, GoRouterState state) {
+          return const PdfLibraryScreen();
         },
       ),
     ],
