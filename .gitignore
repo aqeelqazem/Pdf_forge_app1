@@ -1,17 +1,57 @@
-# Flutter/Dart specific
-.packages
-.dart_tool/
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.svn/
+
+# IntelliJ
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+gen/
+
+# The Flutter SDK
 .flutter-plugins
 .flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
 
 # Build directory
 build/
 
-# IDE specific
-.idea/
+# Android Studio
+captures/
+.externalNativeBuild
+*.apk
+output/
+
+# VS Code
 .vscode/
 
-# Archives
-*.zip
-*.tar
-*.tar.gz
+# Xcode
+*.hmap
+*.xccheckout
+*.xcscmblueprint
+*.xcschememanagement.plist
+*.xcscheme
+*.xcworkspace
+xcuserdata/
+
+# Cocoapods
+Pods/
+Podfile.lock
+
+# Dart
+.dart_tool/
+pubspec.lock
+
+# Web
+.dart_tool/build/

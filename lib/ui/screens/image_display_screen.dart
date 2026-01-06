@@ -1,4 +1,5 @@
 
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -34,6 +35,8 @@ class ImageDisplayScreen extends StatelessWidget {
           TextButton(
             onPressed: () {
               context.read<ImageCubit>().clearImages();
+              // After clearing, explicitly navigate home.
+              context.go('/');
               Navigator.of(ctx).pop();
             },
             child: const Text('Delete', style: TextStyle(color: Colors.red)),
@@ -45,7 +48,7 @@ class ImageDisplayScreen extends StatelessWidget {
 
   Future<void> _createPdf(BuildContext context, ImageState state) async {
     final pdfService = PdfService();
-    final imageCubit = context.read<ImageCubit>(); // Get cubit instance
+    final imageCubit = context.read<ImageCubit>();
 
     final orderedImageBytes = state.pickedImages
         .map((xfile) => state.imageBytes[xfile.path])
@@ -77,9 +80,7 @@ class ImageDisplayScreen extends StatelessWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () {
-              Navigator.of(ctx).pop();
-            },
+            onPressed: () => Navigator.of(ctx).pop(),
             child: const Text('Cancel'),
           ),
           TextButton(
@@ -95,10 +96,9 @@ class ImageDisplayScreen extends StatelessWidget {
       ),
     );
 
-    if (fileName == null) return; // User cancelled
+    if (fileName == null) return;
 
     if (!context.mounted) return;
-
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -110,127 +110,171 @@ class ImageDisplayScreen extends StatelessWidget {
           orderedImageBytes.map((e) => Uint8List.fromList(e)).toList(), fileName!);
 
       if (!context.mounted) return;
-      Navigator.of(context, rootNavigator: true).pop(); // Dismiss loading indicator
+      Navigator.of(context, rootNavigator: true).pop();
 
       bool shareFile = false;
-      await showDialog(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('PDF Saved'),
-          content: const Text('Would you like to share the file?'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                shareFile = false;
-                Navigator.of(ctx).pop();
-              },
-              child: const Text('No'),
-            ),
-            TextButton(
-              onPressed: () {
-                shareFile = true;
-                Navigator.of(ctx).pop();
-              },
-              child: const Text('Yes, Share'),
-            ),
-          ],
-        ),
-      );
+      if (context.mounted) {
+        await showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('PDF Saved'),
+            content: const Text('Would you like to share the file?'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  shareFile = false;
+                  Navigator.of(ctx).pop();
+                },
+                child: const Text('No'),
+              ),
+              TextButton(
+                onPressed: () {
+                  shareFile = true;
+                  Navigator.of(ctx).pop();
+                },
+                child: const Text('Yes, Share'),
+              ),
+            ],
+          ),
+        );
+      }
 
-      // Share if the user chose to. The await ensures we don't clear images until sharing is done.
       if (shareFile) {
         await Share.shareXFiles([XFile(filePath)], text: 'Here is your PDF file.');
       }
 
-      // ALWAYS clear images. The BlocListener will then handle navigation.
       imageCubit.clearImages();
+      if (context.mounted) {
+        context.go('/');
+      }
 
     } catch (e) {
-      if (!context.mounted) return;
-      Navigator.of(context, rootNavigator: true).pop(); // Dismiss loading indicator
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to create PDF: $e')),
-      );
+      if (context.mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to create PDF: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleNavigationBack(BuildContext context) async {
+    if (context.read<ImageCubit>().state.pickedImages.isEmpty) {
+      context.go('/');
+      return;
+    }
+
+    final bool? shouldProceed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Warning'),
+        content: const Text('You will lose the images in the current session. Proceed?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('No'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Yes', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldProceed == true && context.mounted) {
+      context.read<ImageCubit>().clearImages();
+      context.go('/');
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<ImageCubit, ImageState>(
-      listenWhen: (previous, current) {
-        // This listener only cares about when images are cleared, not reordered.
-        return previous.pickedImages.isNotEmpty && current.pickedImages.isEmpty;
-      },
-      listener: (context, state) {
-        // When all images are gone (cleared), navigate back to the home screen.
-        context.go('/');
-      },
-      child: BlocBuilder<ImageCubit, ImageState>(
-        builder: (context, state) {
-          final images = state.pickedImages;
+    return BlocBuilder<ImageCubit, ImageState>(
+      builder: (context, state) {
+        final images = state.pickedImages;
 
-          return Scaffold(
+        return PopScope(
+          canPop: false,
+          onPopInvoked: (didPop) {
+            if (didPop) return;
+            _handleNavigationBack(context);
+          },
+          child: Scaffold(
             appBar: AppBar(
               leading: IconButton(
                 icon: const Icon(Icons.arrow_back),
                 tooltip: 'Back to Home',
-                onPressed: () => context.go('/'),
+                onPressed: () => _handleNavigationBack(context),
               ),
-              title: Text('Selected Images (${images.length})'),
               actions: [
-                if (images.isNotEmpty)
-                  IconButton(
-                    icon: const Icon(Icons.picture_as_pdf),
-                    tooltip: 'Create PDF',
-                    onPressed: () => _createPdf(context, state),
-                  ),
-                if (images.isNotEmpty)
-                  IconButton(
-                    icon: const Icon(Icons.edit),
-                    tooltip: 'Edit Images',
-                    onPressed: () => context.go('/edit'),
-                  ),
-                if (images.isNotEmpty)
-                  IconButton(
-                    icon: const Icon(Icons.delete_sweep),
-                    tooltip: 'Delete All',
-                    onPressed: () => _showDeleteConfirmation(context),
-                  ),
+                if (images.isNotEmpty) IconButton(
+                  icon: const Icon(Icons.picture_as_pdf),
+                  tooltip: 'Create PDF',
+                  onPressed: () => _createPdf(context, state),
+                ),
+                if (images.isNotEmpty) IconButton(
+                  icon: const Icon(Icons.edit),
+                  tooltip: 'Edit Images',
+                  onPressed: () => context.go('/edit'),
+                ),
+                if (images.isNotEmpty) IconButton(
+                  icon: const Icon(Icons.delete_sweep),
+                  tooltip: 'Delete All',
+                  onPressed: () => _showDeleteConfirmation(context),
+                ),
               ],
             ),
-            body: images.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.photo_library_outlined,
-                            size: 80, color: Colors.grey),
-                        const SizedBox(height: 16),
-                        const Text(
-                          'No images selected yet.',
-                          style: TextStyle(fontSize: 18, color: Colors.grey),
+            body: LayoutBuilder(
+              builder: (context, constraints) {
+                // Adjusted the font size to 12% of the screen width to ensure it fits on one line.
+                final responsiveFontSize = constraints.maxWidth * 0.12;
+
+                return Stack(
+                  children: [
+                    Center(
+                      child: Text(
+                        'PDF Genius',
+                        style: TextStyle(
+                          fontSize: responsiveFontSize,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey.withAlpha(38),
                         ),
-                        const SizedBox(height: 16),
-                        ElevatedButton.icon(
-                          onPressed: () => _pickImages(context),
-                          icon: const Icon(Icons.add_a_photo),
-                          label: const Text('Select Images'),
-                        ),
-                      ],
+                      ),
                     ),
-                  )
-                : const Padding(
-                    padding: EdgeInsets.all(4.0),
-                    child: ImageGrid(),
-                  ),
+                    images.isEmpty
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.photo_library_outlined, size: 80, color: Colors.grey),
+                                const SizedBox(height: 16),
+                                const Text('No images selected yet.', style: TextStyle(fontSize: 18, color: Colors.grey)),
+                                const SizedBox(height: 16),
+                                ElevatedButton.icon(
+                                  onPressed: () => _pickImages(context),
+                                  icon: const Icon(Icons.add_a_photo),
+                                  label: const Text('Select Images'),
+                                ),
+                              ],
+                            ),
+                          )
+                        : const Padding(
+                            padding: EdgeInsets.all(4.0),
+                            child: ImageGrid(),
+                          ),
+                  ],
+                );
+              },
+            ),
             floatingActionButton: FloatingActionButton.extended(
               onPressed: () => _pickImages(context),
               label: const Text('Add Images'),
               icon: const Icon(Icons.add),
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 }

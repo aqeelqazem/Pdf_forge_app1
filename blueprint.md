@@ -4,24 +4,9 @@
 
 PDF Genius is a mobile application designed to allow users to quickly and easily create high-quality PDF documents from their images. The application focuses on an intuitive workflow, from image selection and editing to the final PDF generation.
 
-## Current Plan: Implement Theme Switcher (Day/Night Mode)
+## Current Plan
 
-**Objective:** Add an icon on the main screen to allow the user to instantly switch between light (day) and dark (night) mode.
-
-**Specific Requirements:**
-1.  **Toggle Icon:** Place an `IconButton` in the `AppBar` of the main screen.
-2.  **Light Theme Color:** The light mode must use a "light sky blue" color (`lightBlue`) as the primary basis for the color palette (`seedColor`).
-
-**Technical Action Plan:**
-1.  **Add `provider`**: Integrate the `provider` package for theme state management. (Already completed).
-2.  **Create `ThemeProvider`**: Develop a `ThemeProvider` class that extends `ChangeNotifier` to handle the current theme state (`ThemeMode`) and notify listeners of changes.
-3.  **Integrate into `main.dart`**: Wrap the main application (`MyApp`) with a `ChangeNotifierProvider` to make the `ThemeProvider` available throughout the widget tree.
-4.  **Define Themes**:
-    *   **Light Theme:** Create a `ThemeData` using `ColorScheme.fromSeed` with `Colors.lightBlue` as the `seedColor`.
-    *   **Dark Theme:** Create a dark `ThemeData` to maintain visual consistency.
-5.  **Update UI**:
-    *   Consume the `ThemeProvider` in `MyApp` to apply the selected theme (`theme`, `darkTheme`, `themeMode`).
-    *   Add the `IconButton` in the `AppBar` of `HomeScreen` that, when pressed, calls the method to change the theme in the `ThemeProvider`.
+The project is in a stable state. The current objective is to address user-requested features and improvements while maintaining application stability and adhering to established engineering best practices.
 
 ## Implemented Features
 
@@ -38,6 +23,7 @@ PDF Genius is a mobile application designed to allow users to quickly and easily
 *   **PDF Sharing**: After creating a PDF, users have the option to instantly share it via the device's native options.
 *   **Robust Navigation**: Uses `go_router` for navigation, with automatic redirects for a smooth user experience.
 *   **Session Persistence**: The app automatically saves the session state (selected images and their order), allowing users to continue where they left off.
+*   **Back Navigation Warning**: A confirmation dialog is implemented on the `ImageDisplayScreen` to prevent accidental loss of the current image session when the user attempts to navigate back.
 
 ### Advanced Integrated Image Editor
 
@@ -56,18 +42,36 @@ PDF Genius is a mobile application designed to allow users to quickly and easily
 *   **General Theme**: The app uses `ThemeData` with `ColorScheme.fromSeed` for a modern and consistent color scheme. The primary color is `Colors.blueGrey`.
 *   **Dark/Light Mode**: Full support for both modes, with a button on the "About" screen to toggle.
 *   **Typography**: Uses the `google_fonts` package with the "Roboto" font for clean and legible typography.
+*   **Responsive Watermark**: On the image display screen, the "PDF Genius" watermark is fully responsive. It dynamically scales its font size based on the screen width, ensuring it is visually balanced and legible on all device sizes, from small phones to large tablets.
+*   **Intuitive Icons**: The icon for creating a PDF has been replaced with a custom-built composite icon (`Image -> Arrow -> Document`) to visually represent the conversion process, enhancing user understanding.
 
 ## Recent Development Activity
 
-### Web Compatibility for Image Cropper (Reverted)
+### 1. Back Navigation Safety (Robust Implementation)
 
-*   **Objective**: An attempt was made to enable the image cropping and rotation functionality on the web platform, where it was previously non-functional.
-*   **Actions Taken**:
-    1.  The `image_cropper_for_web` package was added as a dependency to provide web-specific implementation.
-    2.  The necessary JavaScript (`cropper.min.js`) and CSS (`cropper.min.css`) files were linked in `web/index.html` as required by the package documentation.
-*   **Outcome**: Despite these changes and multiple debugging steps (including a full application restart), the error persisted on the web platform. The root cause appears to be a deeper, more subtle conflict within the web environment dependencies rather than an implementation error.
-*   **Decision**: In adherence to the core principle of prioritizing application stability, the decision was made to **revert all related changes**. The `image_cropper_for_web` package was removed, and `web/index.html` was restored to its previous state. The application is now back in its fully stable condition, with the known limitation that image cropping does not function on the web. This was deemed the wisest course of action to avoid introducing instability for a non-critical feature.
+*   **Objective**: Add a confirmation dialog on the `ImageDisplayScreen` to prevent users from accidentally losing their current image session.
+*   **Challenge & Resolution**:
+    *   **Initial Attempt**: The first implementation introduced a `PopScope` widget that conflicted with an existing `BlocListener` responsible for navigation. This conflict created an infinite redirect loop (`ERR_TOO_MANY_REDIRECTS`), a critical stability issue.
+    *   **Engineering Decision**: The error was immediately addressed by redesigning the navigation logic. The `BlocListener` was identified as the source of the conflict and was removed.
+    *   **Final Solution**: A single, unified function, `_handleNavigationBack`, was created to manage all back navigation events (system gesture and `AppBar` button). This function now explicitly controls the workflow:
+        1.  Display a confirmation dialog.
+        2.  Upon user confirmation, clear the image state (`ImageCubit`).
+        3.  **Then, and only then,** perform a single, explicit navigation back to the home screen (`context.go('/')`).
+*   **Outcome**: This robust solution completely eliminates the redirect loop and provides a safe, predictable user experience, fully aligning with our core principle of application stability.
+
+### 2. Responsive Watermark
+
+*   **Objective**: The "PDF Genius" watermark on the `ImageDisplayScreen` had a fixed font size, causing it to appear too large on small screens and too small on larger ones.
+*   **Action Taken**: The `LayoutBuilder` widget was implemented to make the watermark responsive.
+*   **Implementation**: The `fontSize` of the watermark is now calculated dynamically as a percentage of the available screen width (`constraints.maxWidth * 0.2`).
+*   **Outcome**: The watermark now scales gracefully across all device sizes, significantly improving the visual polish and user experience of the application.
+
+### 3. Web Compatibility for Image Cropper (Reverted)
+
+*   **Objective**: An attempt was made to enable the image cropping and rotation functionality on the web platform.
+*   **Outcome**: The changes led to persistent errors and dependency conflicts within the web environment.
+*   **Decision**: To maintain absolute stability, all related changes were reverted. The application remains fully functional with the known limitation that image editing is not supported on the web.
 
 ## Code Status
 
-The codebase is now **stable and free of compilation errors**. All critical issues that prevented the application from running have been addressed, including the image ordering bug. The remaining warnings (`deprecated_member_use`, `unused_import`) have been reviewed and determined not to affect the current functionality, although addressing them in future iterations is recommended to maintain long-term code quality.
+The codebase is **stable and free of compilation errors**. All critical issues have been resolved. Remaining warnings (`deprecated_member_use`, `unused_import`) are documented as low-priority technical debt and do not affect current functionality.
