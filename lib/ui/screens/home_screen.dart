@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:myapp/business_logic/image_cubit.dart';
+import 'package:myapp/main.dart'; // Import main.dart to access ThemeProvider
+import 'package:provider/provider.dart'; // Import provider
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -37,13 +39,13 @@ class HomeScreen extends StatelessWidget {
     final List<XFile> images = await ImagePicker().pickMultiImage();
     if (!context.mounted || images.isEmpty) return;
 
-    // The BlocListener will now handle the navigation after this state change.
     await imageCubit.addImages(images);
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final themeProvider = Provider.of<ThemeProvider>(context);
 
     return BlocListener<ImageCubit, ImageState>(
       listenWhen: (previous, current) {
@@ -56,6 +58,13 @@ class HomeScreen extends StatelessWidget {
         appBar: AppBar(
           title: const Text('PDF Genius'),
           actions: [
+            IconButton(
+              icon: Icon(themeProvider.themeMode == ThemeMode.dark
+                  ? Icons.light_mode_outlined
+                  : Icons.dark_mode_outlined),
+              tooltip: 'Toggle Theme',
+              onPressed: () => themeProvider.toggleTheme(),
+            ),
             BlocBuilder<ImageCubit, ImageState>(
               builder: (context, state) {
                 if (state.pickedImages.isEmpty) {
@@ -76,12 +85,11 @@ class HomeScreen extends StatelessWidget {
             ),
           ],
         ),
-        // Using a Column with Spacers for a flexible, non-scrolling layout.
         body: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Column(
             children: <Widget>[
-              const Spacer(flex: 2), // Pushes content down from the app bar
+              const Spacer(flex: 2),
               const Icon(
                 Icons.add_photo_alternate_outlined,
                 size: 100,
@@ -129,7 +137,7 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              const Spacer(flex: 3), // Provides more flexible space at the bottom
+              const Spacer(flex: 3),
             ],
           ),
         ),

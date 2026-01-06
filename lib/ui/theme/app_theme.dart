@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  static const Color _primaryColor = Color(0xFF4A90E2);
+  static const Color _primaryColor = Colors.lightBlue; // Changed to lightBlue
   static const Color _lightBackgroundColor = Color(0xFFF4F6F8);
   static const Color _darkBackgroundColor = Color(0xFF1A1A1A);
   static const Color _lightCardColor = Colors.white;
@@ -11,7 +11,7 @@ class AppTheme {
 
   static final ThemeData lightTheme = ThemeData.light(useMaterial3: true).copyWith(
     colorScheme: ColorScheme.fromSeed(
-      seedColor: _primaryColor,
+      seedColor: _primaryColor, // Using the new lightBlue seed
       brightness: Brightness.light,
       primary: _primaryColor,
       surface: _lightBackgroundColor,
@@ -34,7 +34,7 @@ class AppTheme {
 
   static final ThemeData darkTheme = ThemeData.dark(useMaterial3: true).copyWith(
     colorScheme: ColorScheme.fromSeed(
-      seedColor: _primaryColor,
+      seedColor: _primaryColor, // Dark theme can also be seeded from the same color for consistency
       brightness: Brightness.dark,
       primary: _primaryColor,
       surface: _darkBackgroundColor,

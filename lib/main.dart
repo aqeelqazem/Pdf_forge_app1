@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:myapp/app_router.dart';
@@ -5,9 +6,27 @@ import 'package:myapp/business_logic/image_cubit.dart';
 import 'package:myapp/business_logic/pdf_library_cubit.dart';
 import 'package:myapp/services/pdf_service.dart';
 import 'package:myapp/ui/theme/app_theme.dart';
+import 'package:provider/provider.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => ThemeProvider(),
+      child: const MyApp(),
+    ),
+  );
+}
+
+class ThemeProvider with ChangeNotifier {
+  ThemeMode _themeMode = ThemeMode.system;
+
+  ThemeMode get themeMode => _themeMode;
+
+  void toggleTheme() {
+    _themeMode =
+        _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+    notifyListeners();
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -30,18 +49,20 @@ class MyApp extends StatelessWidget {
         ],
         child: Builder(
           builder: (context) {
-            // Use context.read instead of context.watch to prevent unnecessary rebuilds
-            // of the router. The router itself listens to the stream for changes.
             final imageCubit = context.read<ImageCubit>();
             final appRouter = AppRouter(imageCubit: imageCubit);
 
-            return MaterialApp.router(
-              routerConfig: appRouter.router,
-              debugShowCheckedModeBanner: false,
-              title: 'PDF Genius',
-              theme: AppTheme.lightTheme,
-              darkTheme: AppTheme.darkTheme,
-              themeMode: ThemeMode.system,
+            return Consumer<ThemeProvider>(
+              builder: (context, themeProvider, child) {
+                return MaterialApp.router(
+                  routerConfig: appRouter.router,
+                  debugShowCheckedModeBanner: false,
+                  title: 'PDF Genius',
+                  theme: AppTheme.lightTheme,
+                  darkTheme: AppTheme.darkTheme,
+                  themeMode: themeProvider.themeMode,
+                );
+              },
             );
           },
         ),

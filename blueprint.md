@@ -1,52 +1,73 @@
-
 # Blueprint: PDF Genius
 
-## Visión General
+## Overview
 
-PDF Genius es una aplicación móvil diseñada para permitir a los usuarios crear documentos PDF de alta calidad a partir de sus imágenes de forma rápida y sencilla. La aplicación se centra en un flujo de trabajo intuitivo, desde la selección de imágenes y la edición hasta la generación del PDF final.
+PDF Genius is a mobile application designed to allow users to quickly and easily create high-quality PDF documents from their images. The application focuses on an intuitive workflow, from image selection and editing to the final PDF generation.
 
-## Características Implementadas
+## Current Plan: Implement Theme Switcher (Day/Night Mode)
 
-### Funcionalidad Principal
+**Objective:** Add an icon on the main screen to allow the user to instantly switch between light (day) and dark (night) mode.
 
-*   **Selección de Imágenes**: Los usuarios pueden seleccionar múltiples imágenes de la galería de su dispositivo.
-*   **Gestión de Estado Centralizada**: Se utiliza `ImageCubit` (basado en `flutter_bloc`) para gestionar el estado de las imágenes seleccionadas.
-*   **Previsualización y Reordenación**: Una pantalla (`ImageDisplayScreen`) muestra las imágenes seleccionadas en una cuadrícula donde los usuarios pueden:
-    *   Reordenar las imágenes arrastrándolas.
-    *   Eliminar imágenes individualmente.
-    *   Añadir más imágenes a la sesión actual.
-    *   Limpiar todas las imágenes para iniciar una nueva sesión.
-*   **Generación de PDF con Orden Correcto**: Los usuarios pueden crear un documento PDF a partir de las imágenes seleccionadas. El sistema ahora garantiza que el orden de las páginas en el PDF coincida exactamente con el orden de las imágenes establecido por el usuario mediante arrastrar y soltar.
-*   **Uso compartido de PDF**: Después de crear un PDF, los usuarios tienen la opción de compartirlo instantáneamente a través de las opciones nativas del dispositivo.
-*   **Navegación Robusta**: Se utiliza `go_router` para la navegación, con redirecciones automáticas para garantizar una experiencia de usuario fluida.
-*   **Persistencia de Sesión**: La aplicación guarda automáticamente el estado de la sesión (imágenes seleccionadas y su orden), permitiendo a los usuarios continuar donde lo dejaron.
+**Specific Requirements:**
+1.  **Toggle Icon:** Place an `IconButton` in the `AppBar` of the main screen.
+2.  **Light Theme Color:** The light mode must use a "light sky blue" color (`lightBlue`) as the primary basis for the color palette (`seedColor`).
 
-### Editor de Imágenes (Interfaz Integrada Avanzada)
+**Technical Action Plan:**
+1.  **Add `provider`**: Integrate the `provider` package for theme state management. (Already completed).
+2.  **Create `ThemeProvider`**: Develop a `ThemeProvider` class that extends `ChangeNotifier` to handle the current theme state (`ThemeMode`) and notify listeners of changes.
+3.  **Integrate into `main.dart`**: Wrap the main application (`MyApp`) with a `ChangeNotifierProvider` to make the `ThemeProvider` available throughout the widget tree.
+4.  **Define Themes**:
+    *   **Light Theme:** Create a `ThemeData` using `ColorScheme.fromSeed` with `Colors.lightBlue` as the `seedColor`.
+    *   **Dark Theme:** Create a dark `ThemeData` to maintain visual consistency.
+5.  **Update UI**:
+    *   Consume the `ThemeProvider` in `MyApp` to apply the selected theme (`theme`, `darkTheme`, `themeMode`).
+    *   Add the `IconButton` in the `AppBar` of `HomeScreen` that, when pressed, calls the method to change the theme in the `ThemeProvider`.
 
-*   **Edición Integrada**: La funcionalidad de edición ha sido completamente rediseñada para una experiencia de usuario superior. En lugar de una herramienta externa, el editor de imágenes ahora es una parte integral de la pantalla de edición.
-*   **Paquete Utilizado**: Se reemplazó `image_cropper` por `crop_your_image`, que permite incrustar el editor directamente en la interfaz de usuario.
-*   **Interfaz de Edición**:
-    *   **Visor de Recorte Activo**: La imagen principal se muestra con un cuadro de recorte activo superpuesto, permitiendo al usuario ver y ajustar el área de recorte en tiempo real.
-    *   **Barra de Miniaturas**: Se mantiene la barra de miniaturas en la parte inferior para una navegación rápida entre las imágenes de la sesión.
-*   **Herramientas de Edición**:
-    *   **Recortar (Crop)**: El usuario puede aplicar el recorte directamente presionando un botón ("Apply Crop"), y la imagen se actualiza en el mismo lugar.
-    *   **Girar (Rotate)**: Se proporcionan botones para girar la imagen a la izquierda y a la derecha de forma instantánea.
-*   **Flujo de Trabajo No Destructivo**: Al igual que antes, las modificaciones no alteran los archivos originales. Los cambios se guardan como nuevos datos de imagen (`Uint8List`) dentro del estado de la aplicación.
+## Implemented Features
 
-### Tema y Estilo
+### Core Functionality
 
-*   **Tema General**: La aplicación utiliza `ThemeData` con `ColorScheme.fromSeed` para un esquema de color moderno y consistente. El color principal es `Colors.blueGrey`.
-*   **Modo Oscuro/Claro**: Soporte completo para ambos modos, con un botón en la pantalla de "Acerca de" para alternar.
-*   **Tipografía**: Se utiliza el paquete `google_fonts` con la fuente "Roboto" para una tipografía limpia y legible.
+*   **Image Selection**: Users can select multiple images from their device's gallery.
+*   **Centralized State Management**: Uses `ImageCubit` (based on `flutter_bloc`) to manage the state of selected images.
+*   **Preview and Reorder**: An `ImageDisplayScreen` shows selected images in a grid where users can:
+    *   Reorder images by dragging them.
+    *   Delete individual images.
+    *   Add more images to the current session.
+    *   Clear all images to start a new session.
+*   **PDF Generation with Correct Order**: Users can create a PDF document from the selected images. The system now ensures that the order of pages in the PDF exactly matches the user-defined order.
+*   **PDF Sharing**: After creating a PDF, users have the option to instantly share it via the device's native options.
+*   **Robust Navigation**: Uses `go_router` for navigation, with automatic redirects for a smooth user experience.
+*   **Session Persistence**: The app automatically saves the session state (selected images and their order), allowing users to continue where they left off.
 
-## Estado del Código
+### Advanced Integrated Image Editor
 
-El código base está ahora **estable y libre de errores de compilación**. Se han abordado todos los problemas críticos que impedían el funcionamiento de la aplicación, incluido el error de ordenación de imágenes. Las advertencias restantes (`deprecated_member_use`, `unused_import`) han sido revisadas y se ha determinado que no afectan la funcionalidad actual de la aplicación, aunque se recomienda abordarlas en futuras iteraciones para mantener la calidad del código a largo plazo.
+*   **Integrated Editing**: The editing functionality has been completely redesigned for a superior user experience. Instead of an external tool, the image editor is now an integral part of the editing screen.
+*   **Package Used**: Replaced `image_cropper` with `crop_your_image`, which allows embedding the editor directly into the UI.
+*   **Editing Interface**:
+    *   **Active Crop Viewer**: The main image is displayed with an active crop box overlay, allowing the user to adjust the crop area in real-time.
+    *   **Thumbnail Strip**: The thumbnail strip at the bottom is maintained for quick navigation between session images.
+*   **Editing Tools**:
+    *   **Crop**: The user can apply the crop directly by pressing an "Apply Crop" button, and the image updates in place.
+    *   **Rotate**: Buttons are provided to instantly rotate the image left and right.
+*   **Non-Destructive Workflow**: As before, modifications do not alter the original files. Changes are saved as new image data (`Uint8List`) within the application's state.
 
-## Próximos Pasos
+### Theme and Style
 
-Aunque la funcionalidad principal está completa, se podrían considerar las siguientes mejoras en el futuro:
+*   **General Theme**: The app uses `ThemeData` with `ColorScheme.fromSeed` for a modern and consistent color scheme. The primary color is `Colors.blueGrey`.
+*   **Dark/Light Mode**: Full support for both modes, with a button on the "About" screen to toggle.
+*   **Typography**: Uses the `google_fonts` package with the "Roboto" font for clean and legible typography.
 
-*   **Filtros de Imagen**: Añadir filtros básicos (blanco y negro, sepia, etc.).
-*   **Ajustes de Calidad de PDF**: Permitir al usuario elegir la calidad y compresión del PDF.
-*   **Mejoras en la Interfaz de Usuario**: Añadir animaciones y transiciones para una experiencia más pulida.
+## Recent Development Activity
+
+### Web Compatibility for Image Cropper (Reverted)
+
+*   **Objective**: An attempt was made to enable the image cropping and rotation functionality on the web platform, where it was previously non-functional.
+*   **Actions Taken**:
+    1.  The `image_cropper_for_web` package was added as a dependency to provide web-specific implementation.
+    2.  The necessary JavaScript (`cropper.min.js`) and CSS (`cropper.min.css`) files were linked in `web/index.html` as required by the package documentation.
+*   **Outcome**: Despite these changes and multiple debugging steps (including a full application restart), the error persisted on the web platform. The root cause appears to be a deeper, more subtle conflict within the web environment dependencies rather than an implementation error.
+*   **Decision**: In adherence to the core principle of prioritizing application stability, the decision was made to **revert all related changes**. The `image_cropper_for_web` package was removed, and `web/index.html` was restored to its previous state. The application is now back in its fully stable condition, with the known limitation that image cropping does not function on the web. This was deemed the wisest course of action to avoid introducing instability for a non-critical feature.
+
+## Code Status
+
+The codebase is now **stable and free of compilation errors**. All critical issues that prevented the application from running have been addressed, including the image ordering bug. The remaining warnings (`deprecated_member_use`, `unused_import`) have been reviewed and determined not to affect the current functionality, although addressing them in future iterations is recommended to maintain long-term code quality.
