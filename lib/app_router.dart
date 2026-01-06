@@ -72,13 +72,19 @@ class AppRouter {
     ],
     redirect: (BuildContext context, GoRouterState state) {
       final bool hasImages = imageCubit.state.pickedImages.isNotEmpty;
-      final String displayLocation = '/display';
-      final String editLocation = '/edit';
+      const String homeLocation = '/';
+      const String displayLocation = '/display';
+      const String editLocation = '/edit';
 
-      // If the user is trying to go to the editor but has no images,
+      final bool isAtHome = state.matchedLocation == homeLocation;
+      final bool isGoingToDisplay = state.matchedLocation == displayLocation;
+      final bool isGoingToEdit = state.matchedLocation == editLocation;
+
+      // If the user has no images and is trying to access the display or edit pages,
       // redirect them to the home page.
-      if (!hasImages && (state.matchedLocation == displayLocation || state.matchedLocation == editLocation)) {
-        return '/';
+      if (!hasImages && (isGoingToDisplay || isGoingToEdit)) {
+        // But don't redirect if they are already at the home page.
+        return isAtHome ? null : homeLocation;
       }
 
       // If no redirect is needed, return null.

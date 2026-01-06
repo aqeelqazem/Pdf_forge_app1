@@ -69,89 +69,101 @@ class _ImageEditScreenState extends State<ImageEditScreen> {
             actions: [
               IconButton(
                 icon: const Icon(Icons.check_circle_outline),
-                tooltip: 'Save and Continue',
-                onPressed: () {
-                  if (_currentIndex < state.pickedImages.length - 1) {
-                    setState(() {
-                      _currentIndex++;
-                    });
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Changes saved. Next image.'),
-                        duration: Duration(seconds: 1),
-                      ),
-                    );
-                  } else {
-                    // This was the last image, go back.
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('All images processed.'),
-                        duration: Duration(seconds: 1),
-                      ),
-                    );
-                    context.go('/display');
-                  }
-                },
+                tooltip: 'Finish Editing',
+                onPressed: () => context.go('/display'),
               ),
             ],
           ),
           body: Column(
             children: [
+              // Main image view, takes up more space and is flexible.
               Expanded(
+                flex: 3,
                 child: Center(
-                  child: imageBytes == null
-                      ? const CircularProgressIndicator()
-                      : Image.memory(imageBytes), // Display the image directly
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: imageBytes == null
+                        ? const CircularProgressIndicator()
+                        : Image.memory(imageBytes, fit: BoxFit.contain),
+                  ),
                 ),
               ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  ElevatedButton.icon(
-                    icon: const Icon(Icons.crop_rotate),
-                    label: const Text('Crop & Rotate'),
-                    onPressed: () => _cropImage(context, imagePath),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Container(
-                height: 100,
-                color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: state.pickedImages.length,
-                  itemBuilder: (context, index) {
-                    final path = state.pickedImages[index].path;
-                    final bytes = state.imageBytes[path];
-                    return GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _currentIndex = index;
-                        });
-                      },
-                      child: Container(
-                        width: 80,
-                        margin: const EdgeInsets.all(8.0),
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: _currentIndex == index
-                                ? Theme.of(context).colorScheme.primary
-                                : Colors.transparent,
-                            width: 2.0,
-                          ),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(4.0),
-                          child: bytes != null
-                              ? Image.memory(bytes, fit: BoxFit.cover)
-                              : const Center(
-                                  child: CircularProgressIndicator()),
+              // Bottom control panel, also flexible, takes less space.
+              Flexible(
+                flex: 1,
+                child: Container(
+                  width: double.infinity, // Ensure it takes full width
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  child: Column(
+                    children: [
+                      // The thumbnail list needs to be inside an Expanded to work within a Column.
+                      Expanded(
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: state.pickedImages.length,
+                          itemBuilder: (context, index) {
+                            final path = state.pickedImages[index].path;
+                            final bytes = state.imageBytes[path];
+                            return GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _currentIndex = index;
+                                });
+                              },
+                              child: Container(
+                                width: 80,
+                                margin: const EdgeInsets.all(8.0),
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: _currentIndex == index
+                                        ? Theme.of(context).colorScheme.primary
+                                        : Colors.transparent,
+                                    width: 2.0,
+                                  ),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(6.0),
+                                  child: bytes != null
+                                      ? Image.memory(bytes, fit: BoxFit.cover)
+                                      : const Center(
+                                          child: CircularProgressIndicator()),
+                                ),
+                              ),
+                            );
+                          },
                         ),
                       ),
-                    );
-                  },
+                      // Controls are placed below the thumbnails
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                             IconButton(
+                               icon: const Icon(Icons.arrow_back_ios_new),
+                               tooltip: 'Previous Image',
+                               onPressed: _currentIndex > 0
+                                   ? () => setState(() => _currentIndex--)
+                                   : null, // Disable if it's the first image
+                             ),
+                            ElevatedButton.icon(
+                              icon: const Icon(Icons.crop_rotate),
+                              label: const Text('Crop/Rotate'),
+                              onPressed: () => _cropImage(context, imagePath),
+                            ),
+                            IconButton(
+                               icon: const Icon(Icons.arrow_forward_ios),
+                               tooltip: 'Next Image',
+                               onPressed: _currentIndex < state.pickedImages.length - 1
+                                   ? () => setState(() => _currentIndex++)
+                                   : null, // Disable if it's the last image
+                             ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],

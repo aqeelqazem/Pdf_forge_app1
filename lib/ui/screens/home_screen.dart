@@ -32,15 +32,12 @@ class HomeScreen extends StatelessWidget {
       if (shouldClear != true) {
         return;
       }
-
-      imageCubit.clearImages();
     }
 
     final List<XFile> images = await ImagePicker().pickMultiImage();
     if (!context.mounted || images.isEmpty) return;
 
-    // Navigation logic is now fully handled by GoRouter's redirect function.
-    // This cubit change will trigger the router's listener.
+    // The BlocListener will now handle the navigation after this state change.
     await imageCubit.addImages(images);
   }
 
@@ -48,38 +45,43 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    // The BlocListener has been removed as per the approved architecture.
-    // The Scaffold is now the top-level widget.
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('PDF Genius'),
-        actions: [
-          BlocBuilder<ImageCubit, ImageState>(
-            builder: (context, state) {
-              if (state.pickedImages.isEmpty) {
-                return const SizedBox.shrink();
-              } else {
-                return IconButton(
-                  icon: const Icon(Icons.edit_document),
-                  tooltip: 'Continue Editing',
-                  onPressed: () => context.go('/display'),
-                );
-              }
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.info_outline),
-            tooltip: 'About App',
-            onPressed: () => context.go('/about'),
-          ),
-        ],
-      ),
-      body: Center(
-        child: Padding(
+    return BlocListener<ImageCubit, ImageState>(
+      listenWhen: (previous, current) {
+        return previous.pickedImages.isEmpty && current.pickedImages.isNotEmpty;
+      },
+      listener: (context, state) {
+        context.go('/display');
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('PDF Genius'),
+          actions: [
+            BlocBuilder<ImageCubit, ImageState>(
+              builder: (context, state) {
+                if (state.pickedImages.isEmpty) {
+                  return const SizedBox.shrink();
+                } else {
+                  return IconButton(
+                    icon: const Icon(Icons.edit_document),
+                    tooltip: 'Continue Editing',
+                    onPressed: () => context.go('/display'),
+                  );
+                }
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.info_outline),
+              tooltip: 'About App',
+              onPressed: () => context.go('/about'),
+            ),
+          ],
+        ),
+        // Using a Column with Spacers for a flexible, non-scrolling layout.
+        body: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
+              const Spacer(flex: 2), // Pushes content down from the app bar
               const Icon(
                 Icons.add_photo_alternate_outlined,
                 size: 100,
@@ -100,8 +102,10 @@ class HomeScreen extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 40),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+              Wrap(
+                spacing: 16.0,
+                runSpacing: 16.0,
+                alignment: WrapAlignment.center,
                 children: [
                   ElevatedButton.icon(
                     icon: const Icon(Icons.image_outlined),
@@ -113,7 +117,6 @@ class HomeScreen extends StatelessWidget {
                       textStyle: theme.textTheme.titleMedium,
                     ),
                   ),
-                  const SizedBox(width: 16),
                   OutlinedButton.icon(
                     icon: const Icon(Icons.folder_open_outlined),
                     label: const Text('Library'),
@@ -123,9 +126,10 @@ class HomeScreen extends StatelessWidget {
                           horizontal: 24, vertical: 16),
                       textStyle: theme.textTheme.titleMedium,
                     ),
-                  )
+                  ),
                 ],
               ),
+              const Spacer(flex: 3), // Provides more flexible space at the bottom
             ],
           ),
         ),

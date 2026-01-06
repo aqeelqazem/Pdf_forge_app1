@@ -1,26 +1,17 @@
-# Miscellaneous
-*.class
-*.log
-*.pyc
-*.swp
-.DS_Store
-.atom/
-.buildlog/
-.history
-.svn/
-migrate_working_dir/
-
-# Flutter/Dart
-.dart_tool/
-.idea/
+# Flutter/Dart specific
 .packages
-.project
-.vscode/
-build/
-*.apk
-*.aab
-*.ipa
-*.app
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
 
-# Sensitive
-secrets.json
+# Build directory
+build/
+
+# IDE specific
+.idea/
+.vscode/
+
+# Archives
+*.zip
+*.tar
+*.tar.gz
