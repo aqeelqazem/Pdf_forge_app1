@@ -1,5 +1,5 @@
-
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
@@ -7,74 +7,50 @@ class AboutScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    const String appName = 'PDF Genius';
-    const String appVersion = '1.0.0'; // Updated Version
-    const String developerName = 'Aqeel Al-Ulyawi';
-    const String copyrightYear = '2026'; // Corrected Year
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('About $appName'),
-        centerTitle: true,
+        title: const Text('About PDF Forge'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go('/'),
+        ),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(24.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            const Spacer(flex: 1),
-            // App Icon (Placeholder)
+            const Spacer(),
             Icon(
               Icons.picture_as_pdf,
-              size: 80,
+              size: 100,
               color: theme.colorScheme.primary,
             ),
             const SizedBox(height: 20),
-
-            // App Name and Version
             Text(
-              appName,
-              style: theme.textTheme.headlineLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.primary,
-              ),
-              textAlign: TextAlign.center,
+              'PDF Forge',
+              style: theme.textTheme.displaySmall,
             ),
             Text(
-              'Version $appVersion',
+              'Version 1.0.0',
               style: theme.textTheme.titleMedium,
-              textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 30),
-
-            // App Description
-            Text(
-              'A simple and elegant tool to convert your favorite images into a single, high-quality PDF document, ready to be shared with the world.',
-              style: theme.textTheme.bodyLarge,
-              textAlign: TextAlign.center,
-            ),
-            const Spacer(flex: 2),
-
-            // Copyright Information
-            const Divider(),
             const SizedBox(height: 20),
-            Text(
-              'Developed by',
-              style: theme.textTheme.titleSmall,
+            const Text(
+              'Create beautiful PDF documents from your images in seconds.',
+              textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 4),
+            const Spacer(),
             Text(
-              developerName,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              '© $copyrightYear All rights reserved.',
+              'Developed by Aqeel Al-Ulyawi',
               style: theme.textTheme.bodySmall,
-              textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 8),
+            Text(
+              '© 2024 All rights reserved.',
+              style: theme.textTheme.bodySmall,
+            ),
           ],
         ),
       ),

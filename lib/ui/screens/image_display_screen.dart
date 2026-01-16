@@ -1,7 +1,4 @@
-
-import 'dart:async';
-import 'dart:typed_data';
-
+import 'package:cunning_document_scanner/cunning_document_scanner.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -10,14 +7,60 @@ import 'package:myapp/business_logic/image_cubit.dart';
 import 'package:myapp/services/pdf_service.dart';
 import 'package:myapp/ui/widgets/image_grid.dart';
 import 'package:share_plus/share_plus.dart';
+import 'dart:typed_data';
 
 class ImageDisplayScreen extends StatelessWidget {
   const ImageDisplayScreen({super.key});
 
-  Future<void> _pickImages(BuildContext context) async {
-    final images = await ImagePicker().pickMultiImage();
-    if (images.isNotEmpty && context.mounted) {
-      context.read<ImageCubit>().addImages(images);
+  Future<void> _showImageSourceDialog(BuildContext context) async {
+    final imageCubit = context.read<ImageCubit>();
+    final router = GoRouter.of(context);
+
+    await showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Select Image Source'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt_outlined),
+              title: const Text('Scan Document'),
+              onTap: () async {
+                Navigator.of(dialogContext).pop();
+                await _scanDocument(imageCubit, router, dialogContext);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('Pick from Gallery'),
+              onTap: () async {
+                Navigator.of(dialogContext).pop();
+                await _pickFromGallery(imageCubit);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _scanDocument(
+      ImageCubit imageCubit, GoRouter router, BuildContext context) async {
+    final pictures = await CunningDocumentScanner.getPictures();
+
+    if (pictures != null && pictures.isNotEmpty) {
+      final xFiles = pictures.map((path) => XFile(path)).toList();
+      imageCubit.addImages(xFiles);
+    }
+  }
+
+  Future<void> _pickFromGallery(
+      ImageCubit imageCubit) async {
+    final pickedImages = await ImagePicker().pickMultiImage();
+
+    if (pickedImages.isNotEmpty) {
+      imageCubit.addImages(pickedImages);
     }
   }
 
@@ -196,81 +239,63 @@ class ImageDisplayScreen extends StatelessWidget {
 
         return PopScope(
           canPop: false,
-          onPopInvoked: (didPop) {
+          onPopInvokedWithResult: (bool didPop, _) {
             if (didPop) return;
             _handleNavigationBack(context);
           },
           child: Scaffold(
             appBar: AppBar(
+              title: const Text('Your Images'),
               leading: IconButton(
                 icon: const Icon(Icons.arrow_back),
-                tooltip: 'Back to Home',
                 onPressed: () => _handleNavigationBack(context),
               ),
               actions: [
-                if (images.isNotEmpty) IconButton(
-                  icon: const Icon(Icons.picture_as_pdf),
-                  tooltip: 'Create PDF',
-                  onPressed: () => _createPdf(context, state),
-                ),
-                if (images.isNotEmpty) IconButton(
-                  icon: const Icon(Icons.edit),
-                  tooltip: 'Edit Images',
-                  onPressed: () => context.go('/edit'),
-                ),
-                if (images.isNotEmpty) IconButton(
-                  icon: const Icon(Icons.delete_sweep),
-                  tooltip: 'Delete All',
-                  onPressed: () => _showDeleteConfirmation(context),
-                ),
+                if (images.isNotEmpty)
+                  IconButton(
+                    icon: const Icon(Icons.edit),
+                    tooltip: 'Edit Images',
+                    onPressed: () => context.go('/edit'),
+                  ),
+                if (images.isNotEmpty)
+                   IconButton(
+                    icon: const Icon(Icons.add_a_photo),
+                    tooltip: 'Add Images',
+                    onPressed: () => _showImageSourceDialog(context),
+                  ),
+                if (images.isNotEmpty)
+                  IconButton(
+                    icon: const Icon(Icons.delete_forever),
+                    tooltip: 'Delete All',
+                    onPressed: () => _showDeleteConfirmation(context),
+                  ),
               ],
             ),
-            body: LayoutBuilder(
-              builder: (context, constraints) {
-                // Adjusted the font size to 12% of the screen width to ensure it fits on one line.
-                final responsiveFontSize = constraints.maxWidth * 0.12;
-
-                return Stack(
-                  children: [
-                    Center(
-                      child: Text(
-                        'PDF Genius',
-                        style: TextStyle(
-                          fontSize: responsiveFontSize,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey.withAlpha(38),
+            body: images.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.photo_library_outlined, size: 80, color: Colors.grey),
+                        const SizedBox(height: 16),
+                        const Text('No images selected yet.', style: TextStyle(fontSize: 18, color: Colors.grey)),
+                        const SizedBox(height: 16),
+                        ElevatedButton.icon(
+                          onPressed: () => _showImageSourceDialog(context),
+                          icon: const Icon(Icons.add_a_photo),
+                          label: const Text('Select Images'),
                         ),
-                      ),
+                      ],
                     ),
-                    images.isEmpty
-                        ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(Icons.photo_library_outlined, size: 80, color: Colors.grey),
-                                const SizedBox(height: 16),
-                                const Text('No images selected yet.', style: TextStyle(fontSize: 18, color: Colors.grey)),
-                                const SizedBox(height: 16),
-                                ElevatedButton.icon(
-                                  onPressed: () => _pickImages(context),
-                                  icon: const Icon(Icons.add_a_photo),
-                                  label: const Text('Select Images'),
-                                ),
-                              ],
-                            ),
-                          )
-                        : const Padding(
-                            padding: EdgeInsets.all(4.0),
-                            child: ImageGrid(),
-                          ),
-                  ],
-                );
-              },
-            ),
+                  )
+                : const Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: ImageGrid(),
+                  ),
             floatingActionButton: FloatingActionButton.extended(
-              onPressed: () => _pickImages(context),
-              label: const Text('Add Images'),
-              icon: const Icon(Icons.add),
+              onPressed: () => _createPdf(context, state),
+              label: const Text('Create PDF'),
+              icon: const Icon(Icons.picture_as_pdf),
             ),
           ),
         );

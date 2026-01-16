@@ -1,4 +1,3 @@
-
 import 'dart:io';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:myapp/business_logic/pdf_library_state.dart';
@@ -18,7 +17,8 @@ class PdfLibraryCubit extends Cubit<PdfLibraryState> {
       pdfs.sort((a, b) => b.lastModifiedSync().compareTo(a.lastModifiedSync()));
       emit(state.copyWith(status: PdfLibraryStatus.success, pdfs: pdfs));
     } catch (e) {
-      emit(state.copyWith(status: PdfLibraryStatus.failure, error: e.toString()));
+      emit(state.copyWith(
+          status: PdfLibraryStatus.failure, error: e.toString()));
     }
   }
 
@@ -29,13 +29,16 @@ class PdfLibraryCubit extends Cubit<PdfLibraryState> {
       await loadPdfs();
     } catch (e) {
       // Optionally, handle error state specifically for deletion
-      emit(state.copyWith(status: PdfLibraryStatus.failure, error: "Failed to delete: ${e.toString()}"));
+      emit(state.copyWith(
+          status: PdfLibraryStatus.failure,
+          error: "Failed to delete: ${e.toString()}"));
     }
   }
 
   Future<void> sharePdf(File pdfFile) async {
     try {
-      await Share.shareXFiles([XFile(pdfFile.path)], text: 'Here is my PDF file.');
+      await Share.shareXFiles([XFile(pdfFile.path)],
+          text: 'Here is my PDF file.');
     } catch (e) {
       // Handle sharing error if needed
     }

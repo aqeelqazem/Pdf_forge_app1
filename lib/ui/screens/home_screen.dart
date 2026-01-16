@@ -1,45 +1,70 @@
+import 'package:cunning_document_scanner/cunning_document_scanner.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:myapp/business_logic/image_cubit.dart';
-import 'package:myapp/main.dart'; // Import main.dart to access ThemeProvider
-import 'package:provider/provider.dart'; // Import provider
+import 'package:myapp/main.dart';
+import 'package:provider/provider.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
-  Future<void> _pickImages(BuildContext context) async {
+  Future<void> _showImageSourceDialog(BuildContext context) async {
     final imageCubit = context.read<ImageCubit>();
-    if (imageCubit.state.pickedImages.isNotEmpty) {
-      final bool? shouldClear = await showDialog<bool>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('Start New Session?'),
-          content: const Text(
-              'Starting a new session will clear your current images. Do you want to continue?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(false),
-              child: const Text('Cancel'),
+    final router = GoRouter.of(context);
+
+    await showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Select Image Source'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt_outlined),
+              title: const Text('Scan Document'),
+              onTap: () async {
+                Navigator.of(dialogContext).pop();
+                await _scanDocument(imageCubit, router, dialogContext);
+              },
             ),
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(true),
-              child: const Text('Continue'),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('Pick from Gallery'),
+              onTap: () async {
+                Navigator.of(dialogContext).pop();
+                await _pickFromGallery(imageCubit, router);
+              },
             ),
           ],
         ),
-      );
+      ),
+    );
+  }
 
-      if (shouldClear != true) {
-        return;
+  Future<void> _scanDocument(
+      ImageCubit imageCubit, GoRouter router, BuildContext context) async {
+    final pictures = await CunningDocumentScanner.getPictures();
+
+    if (pictures != null && pictures.isNotEmpty) {
+      final xFiles = pictures.map((path) => XFile(path)).toList();
+      await imageCubit.startNewSession(xFiles);
+      if (router.routerDelegate.navigatorKey.currentContext != null) {
+        router.go('/edit');
       }
     }
+  }
 
-    final List<XFile> images = await ImagePicker().pickMultiImage();
-    if (!context.mounted || images.isEmpty) return;
+  Future<void> _pickFromGallery(
+      ImageCubit imageCubit, GoRouter router) async {
+    final pickedImages = await ImagePicker().pickMultiImage();
 
-    await imageCubit.addImages(images);
+    if (pickedImages.isNotEmpty) {
+      await imageCubit.startNewSession(pickedImages);
+      if (router.routerDelegate.navigatorKey.currentContext != null) {
+        router.go('/edit');
+      }
+    }
   }
 
   @override
@@ -47,97 +72,53 @@ class HomeScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final themeProvider = Provider.of<ThemeProvider>(context);
 
-    return BlocListener<ImageCubit, ImageState>(
-      listenWhen: (previous, current) {
-        return previous.pickedImages.isEmpty && current.pickedImages.isNotEmpty;
-      },
-      listener: (context, state) {
-        context.go('/display');
-      },
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('PDF Genius'),
-          actions: [
-            IconButton(
-              icon: Icon(themeProvider.themeMode == ThemeMode.dark
-                  ? Icons.light_mode_outlined
-                  : Icons.dark_mode_outlined),
-              tooltip: 'Toggle Theme',
-              onPressed: () => themeProvider.toggleTheme(),
-            ),
-            BlocBuilder<ImageCubit, ImageState>(
-              builder: (context, state) {
-                if (state.pickedImages.isEmpty) {
-                  return const SizedBox.shrink();
-                } else {
-                  return IconButton(
-                    icon: const Icon(Icons.edit_document),
-                    tooltip: 'Continue Editing',
-                    onPressed: () => context.go('/display'),
-                  );
-                }
-              },
-            ),
-            IconButton(
-              icon: const Icon(Icons.info_outline),
-              tooltip: 'About App',
-              onPressed: () => context.go('/about'),
-            ),
-          ],
-        ),
-        body: Padding(
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('PDF Forge'),
+        actions: [
+          IconButton(
+            icon: Icon(themeProvider.themeMode == ThemeMode.dark
+                ? Icons.light_mode
+                : Icons.dark_mode),
+            onPressed: () => themeProvider.toggleTheme(),
+            tooltip: 'Toggle Theme',
+          ),
+          IconButton(
+            icon: const Icon(Icons.info_outline),
+            onPressed: () => context.go('/about'),
+            tooltip: 'About',
+          ),
+        ],
+      ),
+      body: Center(
+        child: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              const Spacer(flex: 2),
-              const Icon(
-                Icons.add_photo_alternate_outlined,
-                size: 100,
-                color: Colors.grey,
-              ),
+              const Spacer(),
+              Text('Welcome!', style: theme.textTheme.displayLarge),
               const SizedBox(height: 20),
               Text(
-                'Welcome to PDF Genius',
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
+                'Create beautiful PDF documents from your images in seconds.',
+                style: theme.textTheme.titleLarge?.copyWith(
+                  color: theme.colorScheme.secondary,
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 10),
-              const Text(
-                'Create beautiful PDF documents from your images in seconds.',
-                style: TextStyle(fontSize: 16),
-                textAlign: TextAlign.center,
-              ),
               const SizedBox(height: 40),
-              Wrap(
-                spacing: 16.0,
-                runSpacing: 16.0,
-                alignment: WrapAlignment.center,
-                children: [
-                  ElevatedButton.icon(
-                    icon: const Icon(Icons.image_outlined),
-                    label: const Text('Start New Session'),
-                    onPressed: () => _pickImages(context),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 24, vertical: 16),
-                      textStyle: theme.textTheme.titleMedium,
-                    ),
-                  ),
-                  OutlinedButton.icon(
-                    icon: const Icon(Icons.folder_open_outlined),
-                    label: const Text('Library'),
-                    onPressed: () => context.go('/library'),
-                    style: OutlinedButton.styleFrom(
-                       padding: const EdgeInsets.symmetric(
-                          horizontal: 24, vertical: 16),
-                      textStyle: theme.textTheme.titleMedium,
-                    ),
-                  ),
-                ],
+              ElevatedButton.icon(
+                onPressed: () => _showImageSourceDialog(context),
+                icon: const Icon(Icons.add_photo_alternate_outlined),
+                label: const Text('Create New PDF'),
               ),
-              const Spacer(flex: 3),
+              const SizedBox(height: 20),
+              OutlinedButton.icon(
+                onPressed: () => context.go('/library'),
+                icon: const Icon(Icons.folder_open_outlined),
+                label: const Text('Open Library'),
+              ),
+              const Spacer(),
             ],
           ),
         ),

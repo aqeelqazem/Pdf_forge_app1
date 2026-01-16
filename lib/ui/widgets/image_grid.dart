@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:myapp/business_logic/image_cubit.dart';
@@ -30,7 +29,7 @@ class ImageGrid extends StatelessWidget {
 
             // Using a more robust key. The image path is unique and stable.
             return ReorderableDragStartListener(
-              key: ValueKey(image.path), 
+              key: ValueKey(image.path),
               index: index,
               child: Stack(
                 fit: StackFit.expand,
@@ -48,14 +47,16 @@ class ImageGrid extends StatelessWidget {
                     top: 4,
                     right: 4,
                     child: GestureDetector(
-                      onTap: () => context.read<ImageCubit>().removeImage(index),
+                      onTap: () =>
+                          context.read<ImageCubit>().removeImage(index),
                       child: Container(
                         padding: const EdgeInsets.all(4),
                         decoration: const BoxDecoration(
                           color: Colors.black54,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.close, color: Colors.white, size: 16),
+                        child: const Icon(Icons.close,
+                            color: Colors.white, size: 16),
                       ),
                     ),
                   ),

@@ -1,4 +1,3 @@
-
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
@@ -27,6 +26,17 @@ class ImageCubit extends Cubit<ImageState> {
     final updatedBytes = {...state.imageBytes, ...newBytes};
     emit(state.copyWith(pickedImages: updatedImages, imageBytes: updatedBytes));
     _sessionService.saveSession(updatedImages);
+  }
+
+  Future<void> startNewSession(List<XFile> images) async {
+    // Clear previous session
+    emit(const ImageState());
+    await _sessionService.clearSession();
+
+    // Add new images
+    final newBytes = await _getBytesForImages(images);
+    emit(state.copyWith(pickedImages: images, imageBytes: newBytes));
+    await _sessionService.saveSession(images);
   }
 
   void removeImage(int index) {

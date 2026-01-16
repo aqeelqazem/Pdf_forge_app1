@@ -1,4 +1,3 @@
-
 import 'dart:io';
 import 'package:flutter/foundation.dart'; // Import kIsWeb
 import 'package:path_provider/path_provider.dart';
@@ -46,7 +45,7 @@ class PdfService {
     final dir = await _getAppDir();
     // Defensive check in case the directory doesn't exist
     if (!await dir.exists()) {
-        return [];
+      return [];
     }
     final files = dir.listSync();
     return files

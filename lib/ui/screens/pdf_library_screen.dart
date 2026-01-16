@@ -1,4 +1,3 @@
-
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -19,7 +18,6 @@ class _PdfLibraryScreenState extends State<PdfLibraryScreen> {
   @override
   void initState() {
     super.initState();
-    // Load PDFs when the screen is first displayed
     context.read<PdfLibraryCubit>().loadPdfs();
   }
 
@@ -28,7 +26,7 @@ class _PdfLibraryScreenState extends State<PdfLibraryScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Confirm Deletion'),
-        content: Text('Are you sure you want to delete "${pdfFile.path.split('/').last}"?'),
+        content: const Text('Are you sure you want to permanently delete this PDF?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
@@ -50,16 +48,11 @@ class _PdfLibraryScreenState extends State<PdfLibraryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        title: const Text('My PDF Library'),
         leading: IconButton(
-            icon: const Icon(Icons.arrow_back), onPressed: () => context.go('/')),
-        title: const Text('PDF Library'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh List',
-            onPressed: () => context.read<PdfLibraryCubit>().loadPdfs(),
-          ),
-        ],
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go('/'),
+        ),
       ),
       body: BlocBuilder<PdfLibraryCubit, PdfLibraryState>(
         builder: (context, state) {
@@ -67,56 +60,49 @@ class _PdfLibraryScreenState extends State<PdfLibraryScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (state.status == PdfLibraryStatus.failure) {
-            return Center(
-              child: Text('Error loading PDFs: ${state.error}'),
-            );
+            return Center(child: Text('Error: ${state.error}'));
           }
           if (state.pdfs.isEmpty) {
             return const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.folder_off_outlined, size: 80, color: Colors.grey),
-                  SizedBox(height: 16),
-                  Text(
-                    'Your PDF library is empty.',
-                    style: TextStyle(fontSize: 18, color: Colors.grey),
-                  ),
-                ],
-              ),
+              child: Text('No PDFs found.', style: TextStyle(fontSize: 18)),
             );
           }
-
-          // Display the list of PDFs
           return ListView.builder(
             itemCount: state.pdfs.length,
             itemBuilder: (context, index) {
               final pdfFile = state.pdfs[index];
               final fileName = pdfFile.path.split('/').last;
               final fileStat = pdfFile.statSync();
-              final modifiedDate = DateFormat.yMMMd().add_jm().format(fileStat.modified);
-              final fileSize = (fileStat.size / (1024 * 1024)).toStringAsFixed(2); // in MB
+              final modifiedDate =
+                  DateFormat.yMMMd().add_jm().format(fileStat.modified);
+              final fileSize =
+                  (fileStat.size / (1024 * 1024)).toStringAsFixed(2);
 
               return Card(
-                margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: ListTile(
-                  leading: const Icon(Icons.picture_as_pdf, color: Colors.red, size: 40),
-                  title: Text(fileName, style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text('Modified: $modifiedDate\nSize: ${fileSize}MB'),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.share, color: Colors.blue),
-                        tooltip: 'Share',
-                        onPressed: () => context.read<PdfLibraryCubit>().sharePdf(pdfFile),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete_forever, color: Colors.redAccent),
-                        tooltip: 'Delete',
-                        onPressed: () => _showDeleteConfirmation(context, pdfFile),
-                      ),
+                  leading: const Icon(Icons.picture_as_pdf,
+                      color: Colors.red, size: 40),
+                  title: Text(fileName,
+                      style: const TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle:
+                      Text('Modified: $modifiedDate\nSize: ${fileSize}MB'),
+                  trailing: PopupMenuButton(
+                    itemBuilder: (context) => [
+                      const PopupMenuItem(value: 'open', child: Text('Open')),
+                      const PopupMenuItem(value: 'share', child: Text('Share')),
+                      const PopupMenuItem(
+                          value: 'delete', child: Text('Delete')),
                     ],
+                    onSelected: (value) {
+                      if (value == 'open') {
+                        OpenFilex.open(pdfFile.path);
+                      } else if (value == 'share') {
+                        context.read<PdfLibraryCubit>().sharePdf(pdfFile);
+                      } else if (value == 'delete') {
+                        _showDeleteConfirmation(context, pdfFile);
+                      }
+                    },
                   ),
                   onTap: () => OpenFilex.open(pdfFile.path),
                 ),
